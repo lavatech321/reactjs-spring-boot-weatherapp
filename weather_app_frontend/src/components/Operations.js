@@ -8,10 +8,11 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import Display from './Display';
 import WeatherService from '../service/WeatherService';
 
-const Operations = ({cities, setCities}) => {
+const Operations = ({ cities, setCities }) => {
   const [city, setCity] = useState({
     city: '',
   });
+  const [error, setError] = useState('');
 
   const handle = (e) => {
     const { name, value } = e.target;
@@ -19,26 +20,51 @@ const Operations = ({cities, setCities}) => {
       ...prevState,
       [name]: value,
     }));
-    console.log(name, value);
+    setError(''); // Clear the error message when the user starts typing
+  };
+
+  const checkCityExists = (cityName) => {
+    console.log("City name is", cityName);
+    // This function calls the service that checks if the city exists.
+    return WeatherService.checkCityExists(cityName);
   };
 
   const createRecord = () => {
     if (city.city.trim()) {
-      WeatherService.createWeather(city)
-        .then((response) => {
-          console.log('City added successfully:', response.data.city);
-          // Fetch the updated list of cities
-          WeatherService.getAllWeather()
-            .then((res) => {
-              setCities(res.data); // Update cities state with the new list
+      
+      // Check if the city already exists in the list of cities
+      const cityExists = cities.some(existingCity => existingCity.city.toLowerCase() === city.city.toLowerCase());
+
+      if (cityExists) {
+        setError('City already exists');
+        return; // Prevent the record from being created if the city exists
+      }
+
+      // Check if the city exists on the external API (e.g., OpenWeather)
+      checkCityExists(city.city)
+        .then(() => {
+          // City exists on the external API, proceed to create the record
+          WeatherService.createWeather(city)
+            .then((response) => {
+              console.log('City added successfully:', response.data.city);
+              // Fetch the updated list of cities
+              WeatherService.getAllWeather()
+                .then((res) => {
+                  setCities(res.data); // Update cities state with the new list
+                });
+              setCity({ city: '' }); // Reset input field after successful addition
             })
-          setCity({ name: '' }); // Reset input field after successful addition
+            .catch((error) => {
+              console.error('Error adding city:', error);
+              setError('Error adding city. Please try again.');
+            });
         })
-        .catch((error) => {
-          console.error('Error adding city:', error);
+        .catch(() => {
+          // City does not exist in the external API, set an error message
+          setError('City does not exist');
         });
     } else {
-      console.log('City name is required');
+      setError('City name is required'); // Set an error message if the input is empty
     }
   };
 
@@ -62,7 +88,11 @@ const Operations = ({cities, setCities}) => {
                 onChange={handle}
                 value={city.city}
                 name="city"
+                isInvalid={!!error}
               />
+              <Form.Control.Feedback type="invalid">
+                {error}
+              </Form.Control.Feedback>
             </InputGroup>
 
             <hr />

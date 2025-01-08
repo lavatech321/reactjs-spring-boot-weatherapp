@@ -9,6 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
@@ -24,7 +25,7 @@ public class WeatherApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		Weather w1 = new Weather();
-		String API_URL = "https://api.openweathermap.org/data/2.5/weather?q=Pune&appid=029db852173d8ee15ccb004dffc4586c";
+		String API_URL = "https://api.openweathermap.org/data/2.5/weather?q=Pune&appid=447XXXXXXXXX";
 		RestTemplate restTemplate = new RestTemplate();
 		String response = restTemplate.getForObject(API_URL, String.class);
 		try {
@@ -38,11 +39,14 @@ public class WeatherApplication implements CommandLineRunner {
 
 			// test entering record in table
 			w1.setCity(cityName);
-			weatherRepository.save(w1);
-
+			if (weatherRepository.existsByCity(w1.getCity())) {
+				System.out.println("City already exists");
+			}
+			else {
+				weatherRepository.save(w1);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 }

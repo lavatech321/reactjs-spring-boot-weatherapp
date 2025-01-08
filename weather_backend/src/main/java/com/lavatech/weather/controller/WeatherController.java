@@ -31,8 +31,17 @@ public class WeatherController {
     }
 
     @PostMapping
-    public Weather createWeather(@RequestBody Weather w1) {
-        return weatherRepository.save(w1);
+    public ResponseEntity<String> createWeather(@RequestBody Weather w1) {
+        // Check if the city already exists
+        if (weatherRepository.existsByCity(w1.getCity())) {
+            // If the city already exists, return a message saying the city already exists
+            return ResponseEntity.status(400).body("City already exists");
+        }
+
+        // Save the new weather record
+        weatherRepository.save(w1);
+
+        return ResponseEntity.status(201).body("City added successfully");
     }
 
     @DeleteMapping("{id}")

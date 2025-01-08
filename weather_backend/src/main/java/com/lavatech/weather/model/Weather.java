@@ -10,6 +10,7 @@ public class Weather {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(unique = true, nullable = false)
     private String city;
 
     public Weather(long id, String city) {
